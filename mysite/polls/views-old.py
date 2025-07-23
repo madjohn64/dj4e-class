@@ -1,29 +1,23 @@
 from django.db.models import F
-from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, HttpRequest, Http404, HttpResponseRedirect
+from django.template import loader
 from django.urls import reverse
-from django.views import generic
 
 from .models import Choice, Question
 
+def index(request):
+    latest_question_list = Question.objects.order_by("-pub_date")[:5]
+    context = {"latest_question_list": latest_question_list}
+    return render(request, "polls/index.html", context)
 
-class IndexView(generic.ListView):
-    template_name = "polls/index.html"
-    context_object_name = "latest_question_list"
+def detail(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    return render(request, "polls/detail.html", {"question": question})
 
-    def get_queryset(self):
-        """Return the last five published questions."""
-        return Question.objects.order_by("-pub_date")[:5]
-
-
-class DetailView(generic.DetailView):
-    model = Question
-    template_name = "polls/detail.html"
-
-
-class ResultsView(generic.DetailView):
-    model = Question
-    template_name = "polls/results.html"
+def results(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    return render(request, "polls/results.html", {"question": question})
 
 def vote(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
@@ -46,16 +40,8 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
-    
+
 def owner(request: HttpRequest) -> HttpResponse:
     response = HttpResponse()
     response.write("Hello, world. 2663919c is the polls index.")
-    return response
-
-def cookie(request):
-     print(request.COOKIES)
-     resp = HttpResponse('C is for cookie and that is good enough for me...')
-     resp.set_cookie('zap', 42) # No expired date = until browser close
-     resp.set_cookie('sakaicar', 42, max_age=1000) # seconds until expire
-     return resp
-
+    return response 
